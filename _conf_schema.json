@@ -1,18 +1,18 @@
 {
   "profile_dir": {
-    "description": "人格资料目录（头像/昵称 JSON）",
+    "description": "人格资料目录（头像/昵称/版本/审查），相对路径基于 AstrBot 根目录",
     "type": "string",
-    "default": "/AstrBot/data/persona_profiles"
+    "default": "data/plugin_data/astrbot_plugin_persona_forge/persona_profiles"
   },
   "memory_dir": {
     "description": "人格记忆目录（按人格 JSON）",
     "type": "string",
-    "default": "/AstrBot/data/persona_memory"
+    "default": "data/plugin_data/astrbot_plugin_persona_forge/persona_memory"
   },
   "wiki_file": {
     "description": "共享知识库/Wiki JSON（所有人格共用）",
     "type": "string",
-    "default": "/AstrBot/data/shared_wiki.json"
+    "default": "data/plugin_data/astrbot_plugin_persona_forge/shared_wiki.json"
   },
   "astrbot_kb_name": {
     "description": "可选：同时检索 AstrBot 知识库名称，作为共享 wiki",
@@ -27,7 +27,8 @@
   "snowluma_token": {
     "description": "SnowLuma OneBot access token",
     "type": "string",
-    "default": ""
+    "default": "",
+    "secret": true
   },
   "auto_llm_rewrite": {
     "description": "切换人格时用聊天模型重写提示词（默认关闭，开启会消耗模型额度）",
@@ -55,24 +56,29 @@
     "default": 5
   },
   "backup_dir": {
-    "description": "数字生命卡备份目录（容器内路径）",
+    "description": "数字生命卡备份目录",
     "type": "string",
-    "default": "/AstrBot/data/life_card/backups"
+    "default": "data/plugin_data/astrbot_plugin_persona_forge/life_card/backups"
   },
   "request_dir": {
-    "description": "宿主 CLI 请求目录",
+    "description": "宿主 life-card-host 请求目录",
     "type": "string",
-    "default": "/AstrBot/data/life_card/requests"
+    "default": "data/plugin_data/astrbot_plugin_persona_forge/life_card/requests"
   },
   "result_dir": {
-    "description": "宿主 CLI 结果目录",
+    "description": "宿主 life-card-host 结果目录",
     "type": "string",
-    "default": "/AstrBot/data/life_card/results"
+    "default": "data/plugin_data/astrbot_plugin_persona_forge/life_card/results"
   },
   "allow_restore": {
-    "description": "允许 owner 从 QQ 发起恢复请求",
+    "description": "允许 owner 从 QQ / WebUI 发起恢复",
     "type": "bool",
     "default": false
+  },
+  "max_card_mb": {
+    "description": "单张数字生命卡的大小上限（MB）",
+    "type": "int",
+    "default": 200
   },
   "version_retention": {
     "description": "每个人格保留的提示词版本数",
@@ -108,5 +114,16 @@
     "description": "QQ 资料同步：profile/group_card/hybrid",
     "type": "string",
     "default": "profile"
+  },
+  "memory_scope": {
+    "description": "新记忆默认作用域：chat=只在写入的会话可见；persona=该人格私聊通用",
+    "type": "string",
+    "default": "chat",
+    "options": ["chat", "persona"]
+  },
+  "memory_chat_isolation": {
+    "description": "按会话隔离人格记忆（关闭后退回 0.3.0 行为）",
+    "type": "bool",
+    "default": true
   }
 }

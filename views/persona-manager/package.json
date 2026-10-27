@@ -1,0 +1,7 @@
+{
+  "name": "persona-forge-webui",
+  "private": true,
+  "version": "0.3.1",
+  "description": "人格工坊 WebUI（纯静态 ES Module，无构建链）",
+  "type": "module"
+}

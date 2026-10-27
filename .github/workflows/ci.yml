@@ -16,7 +16,7 @@ jobs:
       - name: Install check deps
         run: pip install pyyaml
       - name: Compile Python
-        run: python -m compileall -q main.py
+        run: python -m compileall -q main.py tests persona_forge
       - name: Validate JSON
         run: python -c "import json; json.load(open('_conf_schema.json', encoding='utf-8'))"
       - name: Check plugin metadata
@@ -28,3 +28,87 @@ jobs:
               assert meta.get(key), key
           print('metadata OK:', meta['name'], meta['version'])
           PY
+      - name: Check version consistency
+        run: |
+          python - <<'PY'
+          import re
+          from pathlib import Path
+
+          import yaml
+
+          config_source = Path('persona_forge/config.py').read_text(encoding='utf-8')
+          match = re.search(
+              r'^PLUGIN_VERSION\s*=\s*["\']([^"\']+)["\']', config_source, re.MULTILINE
+          )
+          assert match, 'PLUGIN_VERSION not found in persona_forge/config.py'
+          plugin_version = match.group(1)
+          meta = yaml.safe_load(Path('metadata.yaml').read_text(encoding='utf-8'))
+          assert meta.get('version') == plugin_version, (
+              'metadata.yaml version %r != persona_forge/config.py PLUGIN_VERSION %r'
+              % (meta.get('version'), plugin_version)
+          )
+          print('version OK:', plugin_version)
+          PY
+
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.10", "3.12"]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+      - name: Run unit tests
+        run: python -m unittest discover -s tests -v
+      - name: Guard discovered test count
+        run: |
+          python - <<'PY'
+          import unittest
+
+          suite = unittest.defaultTestLoader.discover('tests')
+          count = suite.countTestCases()
+          assert count >= 20, f'only {count} tests discovered (expected >= 20)'
+          print(f'discovered {count} tests')
+          PY
+
+  webui:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+      - name: Check WebUI module syntax
+        run: |
+          set -euo pipefail
+          mapfile -t files < <(find views/persona-manager -type f -name '*.js' | sort)
+          if [ ${#files[@]} -eq 0 ]; then
+            echo "::notice::no WebUI JavaScript under views/persona-manager yet - skipping syntax check"
+            exit 0
+          fi
+          i=0
+          for f in "${files[@]}"; do
+            i=$((i + 1))
+            cp "$f" "/tmp/webui-syntax-$i.mjs"
+            node --check "/tmp/webui-syntax-$i.mjs"
+            echo "syntax OK: $f"
+          done
+      - name: Forbid innerHTML and friends
+        run: |
+          set -euo pipefail
+          mapfile -t files < <(find views/persona-manager -type f \( -name '*.js' -o -name '*.html' \) | sort)
+          if [ ${#files[@]} -eq 0 ]; then
+            echo "::notice::no WebUI sources under views/persona-manager yet - skipping innerHTML check"
+            exit 0
+          fi
+          # Only real usage is rejected: assignments and the HTML-injection APIs.
+          if grep -nE '\.(innerHTML|outerHTML)[[:space:]]*=|insertAdjacentHTML[[:space:]]*\(|document\.write(ln)?[[:space:]]*\(' "${files[@]}"; then
+            echo "::error::WebUI must build DOM with createElement / <template> + textContent"
+            exit 1
+          fi
+          echo "no innerHTML-style DOM injection found"
+      - name: Run WebUI unit tests
+        run: node --test tests/webui.test.mjs
