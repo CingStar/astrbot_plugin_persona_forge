@@ -1083,7 +1083,7 @@ function renderPrompt(panel, current) {
       el(
         "p",
         { class: "drawer-note" },
-        "知识库提炼只使用共享 wiki 与人格记忆；用模型提炼会调用聊天模型，消耗额度。提炼结果是草稿，需要到「审查」页通过后才会生效。"
+        "「用知识库提炼」只读取该人格 kind=knowledge 的专属知识记忆；「用模型提炼」会调用聊天模型，消耗额度。两者都会先自动生成版本快照，然后立即写入当前提示词，可在「版本」里回滚。只有开发者模式的「生成教学草稿」会进入审查队列、批准后才生效。"
       )
     )
   );
@@ -1438,12 +1438,15 @@ async function renderDev(panel, current, isCurrent) {
     )
   );
   toggleWrap.appendChild(enabled ? badge("已开启", "success") : badge("未开启", "muted"));
-  if (ttl > 0) {
-    toggleWrap.appendChild(el("span", { class: "chip" }, `剩余 ${formatTtl(ttl)}`));
-  }
-  if (expiresAt) {
+  if (enabled && expiresAt > 0) {
+    const remaining = Math.max(0, toNumber(expiresAt, 0) - Math.floor(Date.now() / 1000));
+    toggleWrap.appendChild(el("span", { class: "chip" }, `剩余 ${formatTtl(remaining)}`));
     toggleWrap.appendChild(
       el("span", { class: "muted", style: { "font-size": "11px" } }, `到期 ${formatTime(expiresAt)}`)
+    );
+  } else if (ttl > 0) {
+    toggleWrap.appendChild(
+      el("span", { class: "muted", style: { "font-size": "11px" } }, `开启后 ${formatTtl(ttl)} 自动关闭`)
     );
   }
   replaceChildren(statusHost, toggleWrap);
@@ -1451,7 +1454,7 @@ async function renderDev(panel, current, isCurrent) {
     el(
       "p",
       { class: "drawer-note" },
-      "开发者模式不是「扮演开发者」，而是把 owner 的教学说明临时合并进提示词：你在这里记下的每一条，都会在下一次重写时交给模型参考。"
+      "开发者模式不是「扮演开发者」，而是把 owner 的教学说明临时合并进提示词：你在这里记下的每一条，都会在下一次重写时交给模型参考。所有已存在的人格（包括 default）都可以用，不需要先完成创建；单次开启 24 小时后自动关闭，只生成待审草稿，不会直接改线上提示词。"
     )
   );
   if (otherActive) {
