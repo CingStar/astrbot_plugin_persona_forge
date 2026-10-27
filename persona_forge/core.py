@@ -56,6 +56,7 @@ class CoreMixin:
 
     def __init__(self, context: Context, config: AstrBotConfig | None = None):
         super().__init__(context)
+        self._readopt_handlers()
         cfg = config or {}
         self.config = config
         self._data_root = astrbot_root_path()
@@ -135,8 +136,73 @@ class CoreMixin:
             self._save_profiles()
         self.pending: dict[str, dict] = {}
         self.command_pending: dict[str, dict] = {}
+        self._check_plugin_set()
         self._register_web_apis()
         logger.info("[persona_forge] profile=%s memory=%s wiki=%s", self.profile_dir, self.memory_dir, self.wiki_file)
+
+    def _plugin_set_info(self) -> dict:
+        """Report whether AstrBot's ``plugin_set`` whitelist includes this plugin.
+
+        AstrBot filters every plugin handler (commands, on_llm_request, tools)
+        by ``plugin_set``; a plugin can load successfully yet never receive any
+        event when it is missing from that list.
+        """
+        try:
+            conf = self.context.get_config()
+            values = conf.get("plugin_set", ["*"]) if conf is not None else ["*"]
+        except Exception:
+            values = ["*"]
+        if not isinstance(values, list):
+            values = ["*"]
+        normalized = [str(x) for x in values]
+        enabled = normalized == ["*"] or PLUGIN_NAME in normalized
+        return {"values": normalized, "enabled": enabled}
+
+    def _check_plugin_set(self) -> None:
+        info = self._plugin_set_info()
+        self.state["plugin_set"] = info
+        self._save_state()
+        if not info["enabled"]:
+            logger.warning(
+                "[persona_forge] plugin_set=%s 未包含 %s；AstrBot 会静默跳过本插件的所有 "
+                "Handler（指令、记忆注入、开发者模式都会失效，但插件本身显示已加载）。"
+                '请把配置 plugin_set 改为 ["*"] 或加入 %s，然后重启 AstrBot。',
+                info["values"],
+                PLUGIN_NAME,
+                PLUGIN_NAME,
+            )
+
+    def _readopt_handlers(self) -> None:
+        """Retry handler adoption once the plugin instance exists.
+
+        Import-time adoption can miss when a loader imports ``main.py`` under a
+        different module path; matching by function identity is independent of
+        module naming.
+        """
+        try:
+            from astrbot.core.star.star_handler import star_handlers_registry
+
+            from .handlers import adopt_mixin_handlers, collect_function_ids
+
+            owner = self.__class__.__module__
+            dir_name = Path(__file__).resolve().parents[1].name
+            if owner.startswith("data.plugins.") or owner.startswith(
+                "astrbot.builtin_stars."
+            ):
+                package = owner.rsplit(".", 1)[0] if "." in owner else owner
+                entry = owner
+            else:
+                package = f"data.plugins.{dir_name}"
+                entry = f"{package}.main"
+            count = adopt_mixin_handlers(
+                star_handlers_registry,
+                entry,
+                package,
+                function_ids=collect_function_ids(type(self).__mro__),
+            )
+            logger.info("[persona_forge] re-adopted %d handlers under %s", count, entry)
+        except Exception as e:
+            logger.warning("[persona_forge] handler re-adoption failed: %s", e)
 
     def _migrate_legacy(self, key: str, target: Path) -> None:
         legacy = Path(LEGACY_DEFAULTS[key])

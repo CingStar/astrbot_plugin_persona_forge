@@ -16,7 +16,7 @@ try:  # AstrBot loads main.py as data.plugins.<dir>.main (package import).
     from .persona_forge.core import CoreMixin
     from .persona_forge.dev_mode import DevModeMixin
     from .persona_forge.events import EventsMixin
-    from .persona_forge.handlers import adopt_mixin_handlers
+    from .persona_forge.handlers import adopt_mixin_handlers, collect_function_ids
     from .persona_forge.knowledge import KnowledgeMixin
     from .persona_forge.legacy_natural import LegacyNaturalMixin
     from .persona_forge.life_cards import LifeCardsMixin
@@ -27,7 +27,7 @@ except ImportError:  # loaded as a top-level module (tools / tests)
     from persona_forge.core import CoreMixin
     from persona_forge.dev_mode import DevModeMixin
     from persona_forge.events import EventsMixin
-    from persona_forge.handlers import adopt_mixin_handlers
+    from persona_forge.handlers import adopt_mixin_handlers, collect_function_ids
     from persona_forge.knowledge import KnowledgeMixin
     from persona_forge.legacy_natural import LegacyNaturalMixin
     from persona_forge.life_cards import LifeCardsMixin
@@ -65,10 +65,26 @@ def _adopt_handlers() -> None:
     else:
         package = f"data.plugins.{dir_name}"
     entry = f"{package}.main"
+    mixins = (
+        CoreMixin,
+        MemoryCommandsMixin,
+        KnowledgeMixin,
+        PersonaCommandsMixin,
+        DevModeMixin,
+        LifeCardsMixin,
+        LegacyNaturalMixin,
+        ApiMixin,
+        EventsMixin,
+    )
     try:
         from astrbot.core.star.star_handler import star_handlers_registry
 
-        count = adopt_mixin_handlers(star_handlers_registry, entry, package)
+        count = adopt_mixin_handlers(
+            star_handlers_registry,
+            entry,
+            package,
+            function_ids=collect_function_ids(mixins),
+        )
         logger.info("[persona_forge] adopted %d handlers under %s", count, entry)
         if count == 0:
             logger.warning(

@@ -579,6 +579,28 @@ AstrBot/data/plugin_data/astrbot_plugin_persona_forge/
 - 0.3.0 的旧记忆没有 `umo` / `scope`，升级后在群聊默认不可见（私聊正常），需要时用 `/memory scope` 或 WebUI 调整；
 - 原生 Persona 保存在 AstrBot 自己的数据库里，迁移不涉及数据库。
 
+## 🩺 指令不响应时的排查
+
+如果插件显示已加载、WebUI 正常，但 `/persona`、`/memory`、`/dev`、`/life` 全部没反应，而日志里有：
+
+```text
+[persona_forge] adopted N handlers under data.plugins.astrbot_plugin_persona_forge.main
+```
+
+优先检查 AstrBot 的 `plugin_set` 白名单（`data/cmd_config.json`，或 WebUI 的配置页）：
+
+```json
+"plugin_set": ["*"]
+```
+
+`plugin_set` 不是 `["*"]` 时，AstrBot 会在消息分发阶段**静默过滤**不在名单里的插件：它们的指令、`on_llm_request` 注入、LLM 工具全部不执行，但插件本身仍显示“已加载”，内置指令（reserved）不受影响。这是 AstrBot 自身的机制，不是插件错误。0.3.1 启动时会打印 WARN，WebUI「设置中心 → 存储」也会给出提示。
+
+其它常见原因：
+
+- 群聊里 `require_at: true` 时需要 @ 机器人；
+- AstrBot 的唤醒前缀被改过（默认 `/`），指令要用新前缀；
+- 更新代码后没有重载插件/重启 AstrBot。
+
 ## 📄 License
 
 [AGPL-3.0](LICENSE) © CingStars

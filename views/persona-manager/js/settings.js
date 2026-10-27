@@ -700,6 +700,17 @@ export function mount(app, root) {
       const migrated = Array.isArray(payload && payload.migrated) ? payload.migrated : [];
       const wrap = el("div", { class: "stack" });
 
+      const pluginSet = payload && payload.plugin_set;
+      if (pluginSet && pluginSet.enabled === false) {
+        wrap.appendChild(
+          notice(
+            `AstrBot 的 plugin_set 白名单没有包含本插件（当前：${(pluginSet.values || []).join(", ") || "空"}）。这会导致插件显示已加载，但所有指令、记忆注入和开发者模式都被静默跳过。请把 plugin_set 改为 ["*"] 或加入 astrbot_plugin_persona_forge，然后重启 AstrBot。`,
+            "warn",
+            "alert"
+          )
+        );
+      }
+
       const countsGrid = el("div", { class: "kv-grid" });
       countsGrid.append(
         kvCard("人格", formatNumber(counts.personas)),

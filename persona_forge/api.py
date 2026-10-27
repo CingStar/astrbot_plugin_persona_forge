@@ -644,6 +644,7 @@ class ApiMixin:
                 "counts": self._status_counts(),
                 "migrated": list(self.state.get("migrated_paths", []) or []),
                 "token_configured": bool(self.snowluma_token),
+                "plugin_set": self._plugin_set_info(),
             })
         payload = await request.json(default={})
         config_payload = payload.get("config") or {}
@@ -721,6 +722,7 @@ class ApiMixin:
             "counts": self._status_counts(),
             "migrated": list(self.state.get("migrated_paths", []) or []),
             "handlers": handlers,
+            "plugin_set": self._plugin_set_info(),
             "dev": {
                 "active_pid": dev_pid,
                 "expires_at": int(self._dev_state().get("expires_at") or 0),
