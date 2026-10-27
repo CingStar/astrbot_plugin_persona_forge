@@ -156,7 +156,7 @@ class MemoryCommandsMixin:
 
     @filter.command_group("memory")
     def memory(self):
-        """人格记忆：add/know/list/forget/clear/promote/preview/scope。"""
+        """人格记忆：add/know/list/snapshot/forget/clear/promote/preview/scope。"""
         pass
 
     @memory.command("add")
@@ -180,6 +180,21 @@ class MemoryCommandsMixin:
             )
         except Exception as e:
             yield event.plain_result(str(e))
+
+    @memory.command("snapshot")
+    @filter.permission_type(filter.PermissionType.ADMIN)
+    async def memory_snapshot(self, event: AstrMessageEvent, persona_id: str = ""):
+        """把当前会话最近 20 条消息抓取到人格记忆（会话快照）。"""
+        pid = persona_id or self._active_persona()
+        try:
+            result = await self._capture_conversation(pid, event.unified_msg_origin, limit=20)
+        except Exception as e:
+            yield event.plain_result(f"抓取失败：{e}")
+            return
+        yield event.plain_result(
+            f"已把当前会话最近 {result['messages']} 条消息写入人格 {pid} 的会话记忆。\n"
+            "人格记忆不会自动同步 QQ 聊天；切换人格时也会自动抓取一次。"
+        )
 
     @memory.command("list")
     @filter.permission_type(filter.PermissionType.ADMIN)

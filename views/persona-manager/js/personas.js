@@ -496,6 +496,7 @@ function normalizeDetail(raw) {
     memoryCount: toNumber(item.memory_count, 0),
     versionCount: toNumber(item.version_count, 0),
     dev: item.dev && typeof item.dev === "object" ? item.dev : null,
+    qq: item.qq && typeof item.qq === "object" ? item.qq : null,
   };
 }
 
@@ -545,7 +546,7 @@ function renderShell() {
     { class: "drawer-sub" },
     el("span", { class: "mono" }, persona.id),
     el("span", { class: "sep" }, "·"),
-    el("span", null, `更新于 ${formatTime(persona.updatedAt)}`)
+    el("span", null, `资料更新于 ${formatTime(persona.updatedAt)}`)
   );
 
   const actions = el("div", { class: "drawer-head-actions" });
@@ -893,6 +894,72 @@ function renderProfile(panel, current) {
   nickSection.appendChild(nickField);
   panel.appendChild(nickSection);
 
+  /* QQ 资料同步 */
+  const qq = persona.qq || {};
+  const qqConfigured = qq.configured === true;
+  const qqSyncedAt = toNumber(qq.synced_at, 0);
+  const qqCheckedAt = toNumber(qq.checked_at, 0);
+  const qqSection = drawerSection("QQ 资料", "user");
+  const qqList = el("div", { class: "info-list" });
+  const qqRows = [
+    ["同步状态", qqConfigured ? "已配置 SnowLuma" : "未配置 SnowLuma"],
+    ["同步模式", qq.mode || "—"],
+    ["上次推送到 QQ", qqSyncedAt ? formatTime(qqSyncedAt) : "从未"],
+    ["最近核对 QQ 资料", qqCheckedAt ? formatTime(qqCheckedAt) : "从未"],
+  ];
+  for (const [key, value] of qqRows) {
+    qqList.appendChild(
+      el(
+        "div",
+        { class: "info-row" },
+        el("span", { class: "info-k" }, key),
+        el("span", { class: "info-v" }, String(value))
+      )
+    );
+  }
+  qqSection.appendChild(qqList);
+  const qqSyncBtn = button({
+    icon: "refresh",
+    label: "立即同步到 QQ",
+    size: "sm",
+    variant: "primary",
+    disabled: !qqConfigured || !isActive,
+    onClick: (event, btn) =>
+      runBusy(
+        btn,
+        async () => {
+          const result = await endpoints.syncQQ(current.pid);
+          toast(result.message || "已同步到 QQ", "success");
+          await current.app.loadPersonas({ force: true });
+          await refreshPersona(current);
+        },
+        "同步到 QQ 失败"
+      ),
+  });
+  qqSection.appendChild(
+    el(
+      "div",
+      { class: "row-wrap" },
+      qqSyncBtn,
+      el(
+        "span",
+        { class: "muted", style: { "font-size": "11px" } },
+        qqConfigured
+          ? "仅在切换人格、点此按钮或 /persona sync 时推送；不会定时轮询。"
+          : "配置 snowluma_http 后才能同步。"
+      )
+    )
+  );
+  qqSection.appendChild(
+    notice(
+      isActive
+        ? "插件不会从 QQ 反向拉取昵称/头像；QQ 侧被改动后，可用 /persona check 查看差异，/persona sync 强制修复。"
+        : "只有「当前人格」会同步到 QQ；切换为当前人格后再点同步。",
+      "info"
+    )
+  );
+  panel.appendChild(qqSection);
+
   /* 资料信息 */
   const infoSection = drawerSection("资料", "info");
   const infoList = el("div", { class: "info-list" });
@@ -1052,6 +1119,22 @@ async function runIterate(current, btn, mode) {
 
 async function renderMemory(panel, current, isCurrent) {
   const listSection = drawerSection("记忆列表", "layers", [
+    button({
+      icon: "history",
+      label: "抓取最近会话",
+      size: "sm",
+      variant: "primary",
+      onClick: (event, btn) =>
+        runBusy(
+          btn,
+          async () => {
+            const result = await endpoints.captureMemory(current.pid);
+            toast(result.message || "已抓取最近会话", "success");
+            await refreshPersona(current);
+          },
+          "抓取会话失败"
+        ),
+    }),
     (() => {
       const refresh = button({
         icon: "refresh",
@@ -1063,6 +1146,12 @@ async function renderMemory(panel, current, isCurrent) {
       return refresh;
     })(),
   ]);
+  listSection.appendChild(
+    notice(
+      "人格记忆不会实时同步 QQ 聊天：默认只在切换人格时自动抓取一次；点「抓取最近会话」或发 /memory snapshot 可立即把最近聊天写入记忆。记忆保存在插件本地（data/plugin_data/astrbot_plugin_persona_forge/persona_memory），每条右侧是本地记录时间。",
+      "info"
+    )
+  );
 
   /* 添加 */
   const addInput = input({ placeholder: "要记住的一句话…", ariaLabel: "记忆内容" });

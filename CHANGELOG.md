@@ -4,6 +4,8 @@
 
 - **后端拆包**：`main.py` 只保留入口与 mixin 组合，业务逻辑拆到 `persona_forge/` 包（`config` / `paths` / `memory_scope` / `cards` / `dev` / `text` / `handlers` / `core` / `persona_commands` / `memory_cmds` / `knowledge` / `dev_mode` / `life_cards` / `legacy_natural` / `events` / `api`）；纯函数模块不依赖 AstrBot。
 - **Handler 归属修正**：拆包后 AstrBot 按 `handler_module_path` 会找不到 Handler 所属插件（路径变成 `...persona_forge.api` 等子模块），新增 `persona_forge/handlers.py`，在 `main.py` 导入完成时把这些 Handler 的 `handler_module_path` / `handler_full_name` / `star_handlers_map` 键改回入口模块，避免指令失效。
+- **会话记忆抓取**：新增 `/memory snapshot` 与 WebUI 记忆页「抓取最近会话」，按需把当前会话最近 20 条消息写入当前人格（`session` / `scope=chat`，重复抓取更新同一条快照）；明确人格记忆不会实时同步 QQ 聊天记录。
+- **QQ 资料同步可视化**：人格抽屉显示「上次推送到 QQ」「最近核对 QQ 资料」时间，新增「立即同步到 QQ」（`POST persona/sync`）；插件不会从 QQ 反向拉取昵称/头像。
 - **数据目录合规整改**：所有数据统一收敛到 `data/plugin_data/astrbot_plugin_persona_forge/**`（资料 / 记忆 / Wiki / 生命卡），不再写 `AstrBot/data/` 根目录；相对路径基于 AstrBot 根目录解析，绝对路径原样保留。
 - **旧数据自动迁移**：启动时仅当「旧路径存在且新路径不存在」才整体移动，并重写 `profiles.json` 里的头像绝对路径；迁移结果记录在 `runtime_state.json` 的 `migrated_paths`，WebUI 设置中心「存储」分区可见，失败只告警不覆盖数据。
 - **安全整改**：`snowluma_token` 标记为 secret 且接口 / WebUI 只回显 `••••••`；头像改为接口返回 data URL，不再用 `/api/...` 直链；头像上传校验 MIME 与 `max_avatar_mb`。

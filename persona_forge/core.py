@@ -482,43 +482,81 @@ class CoreMixin:
         self.context.persona_manager.default_persona = persona_id
         await self.context.persona_manager.initialize()
 
-    async def _snapshot_current_conversation(self, umo: str, persona_id: str) -> None:
-        """Save a compact snapshot of the current conversation into persona memory.
+    async def _capture_conversation(
+        self, persona_id: str, umo: str | None = None, limit: int = 20
+    ) -> dict:
+        """Write the latest messages of a conversation into persona memory.
 
-        The next persona gets a fresh conversation (no old-persona history),
-        but when switching back the snapshot is injected, so its previous
-        dialogue context is inherited as memory rather than raw role history.
+        Chat history is **not** synced automatically: this runs only from a
+        persona switch or an explicit capture (``/memory snapshot`` / WebUI).
+        Re-capturing the same conversation updates its existing snapshot
+        instead of appending duplicates.
         """
-        try:
+        conversations = list(await self._db().get_conversations())
+        if not conversations:
+            raise RuntimeError("还没有任何会话记录")
+        conv = None
+        if umo:
+            same_umo = [c for c in conversations if c.user_id == umo]
+            if not same_umo:
+                raise RuntimeError(f"没有找到会话 {umo}")
             conv_id = self.context.conversation_manager.session_conversations.get(umo)
-            convs = await self._db().get_conversations(user_id=umo)
-            conv = None
             if conv_id:
-                conv = next((c for c in convs if c.conversation_id == conv_id), None)
-            if conv is None and convs:
-                conv = max(convs, key=lambda c: int(c.inner_conversation_id or 0))
-            content = (conv.content or []) if conv else []
-            lines = []
-            for m in content[-20:]:
-                role = m.get("role", "?")
-                text = m.get("content", "")
-                if isinstance(text, list):
-                    text = " ".join(str(x.get("text", "")) for x in text if isinstance(x, dict))
-                if text:
-                    lines.append(f"{'用户' if role == 'user' else '助手'}: {str(text)[:500]}")
-            if not lines:
-                return
-            items = self._load_memory(persona_id)
+                conv = next((c for c in same_umo if c.conversation_id == conv_id), None)
+            if conv is None:
+                conv = max(same_umo, key=lambda c: int(c.inner_conversation_id or 0))
+        else:
+            candidates = [c for c in conversations if c.persona_id == persona_id]
+            if not candidates:
+                candidates = [c for c in conversations if (c.title or "") == f"persona:{persona_id}"]
+            if not candidates:
+                candidates = conversations
+            conv = max(candidates, key=lambda c: int(c.inner_conversation_id or 0))
+            umo = conv.user_id
+        content = conv.content or []
+        lines = []
+        for message in content[-max(1, int(limit)):]:
+            role = message.get("role", "?")
+            text = message.get("content", "")
+            if isinstance(text, list):
+                text = " ".join(str(x.get("text", "")) for x in text if isinstance(x, dict))
+            if text:
+                lines.append(f"{'用户' if role == 'user' else '助手'}: {str(text)[:500]}")
+        if not lines:
+            raise RuntimeError("这个会话还没有可抓取的消息")
+        items = self._load_memory(persona_id)
+        existing = None
+        for item in reversed(items):
+            if item.get("kind") == "session" and item.get("conv_id") == conv.conversation_id:
+                existing = item
+                break
+        if existing is not None:
+            existing["text"] = "\n".join(lines)
+            existing["created_at"] = int(time.time())
+            existing["umo"] = umo or ""
+            existing["scope"] = "chat"
+        else:
             items.append({
                 "id": uuid.uuid4().hex[:12],
                 "text": "\n".join(lines),
                 "kind": "session",
                 "scope": "chat",
-                "umo": umo,
-                "conv_id": conv.conversation_id if conv else "",
+                "umo": umo or "",
+                "conv_id": conv.conversation_id,
                 "created_at": int(time.time()),
             })
-            self._save_memory(persona_id, items)
+        self._save_memory(persona_id, items)
+        return {
+            "persona_id": persona_id,
+            "umo": umo or "",
+            "conv_id": conv.conversation_id,
+            "messages": len(lines),
+        }
+
+    async def _snapshot_current_conversation(self, umo: str, persona_id: str) -> None:
+        """Snapshot the current conversation when switching personas."""
+        try:
+            await self._capture_conversation(persona_id, umo=umo, limit=20)
         except Exception as e:
             logger.warning("[persona_forge] snapshot conversation failed: %s", e)
 
@@ -612,6 +650,10 @@ class CoreMixin:
             "set_qq_avatar",
             {"file": "base64://" + base64.b64encode(raw).decode("ascii")},
         )
+        # Record when the local persona profile was last pushed to QQ.
+        p["qq_synced_at"] = int(time.time())
+        p["qq_sync_mode"] = mode
+        self._save_profiles()
 
     def _save_state(self) -> None:
         self._save_json(self.state_path, self.state)
@@ -663,6 +705,9 @@ class CoreMixin:
             return f"读取 QQ 资料失败：{e}"
         if not nick:
             return "SnowLuma 没有返回当前昵称，无法核对。"
+        p["qq_checked_at"] = int(time.time())
+        p["qq_remote_nickname"] = nick
+        self._save_profiles()
         nick_ok = nick == p.get("nickname")
         avatar_ok = await self._avatar_matches(p.get("avatar_path", ""), uin)
         lines = [

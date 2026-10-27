@@ -242,6 +242,7 @@ AstrBot/data/plugin_data/astrbot_plugin_persona_forge/     # 0.3.1 起的统一�
 | `/memory add 内容` | 写入经历 / 偏好记忆 |
 | `/memory know 内容` | 写入知识型记忆（会进入人格提示词，对所有会话生效） |
 | `/memory list` | 查看当前人格记忆（最近 20 条，带 `scope=` 与来源） |
+| `/memory snapshot` | 立即把当前会话最近 20 条消息写入当前人格记忆（切换人格时也会自动抓取一次） |
 | `/memory preview` | 预览当前会话**可见**的人格记忆（注入前的候选集，排查串味用） |
 | `/memory scope <关键词> chat\|persona` | 批量修改匹配记忆的 `scope`（知识型固定 `global`，会话快照跳过） |
 | `/memory forget 关键词` | 删除包含关键词的记忆 |
@@ -250,6 +251,7 @@ AstrBot/data/plugin_data/astrbot_plugin_persona_forge/     # 0.3.1 起的统一�
 
 > `/memory preview` 与对话时的注入使用**同一套可见性规则**：它展示的是候选集（最终注入还会按关键词打分取前 8 条），排查串味时看这个列表就够了。
 > `/memory scope 关键词 persona` 适合把「只在该群学过的事」升级为该人格私聊通用；反过来 `chat` 可以把通用记忆收窄回某个会话。
+> 人格记忆**不会实时同步 QQ 聊天记录**：只有切换人格、`/memory snapshot` 或 WebUI 记忆页的「抓取最近会话」时才会写入；抓取的是会话快照（`kind=session`），按 `umo` 隔离。
 
 ### 注入规则
 
@@ -469,6 +471,8 @@ AstrBot/data/plugin_data/astrbot_plugin_persona_forge/     # 0.3.1 起的统一�
 | `snowluma_token` | `""` | access token（**secret**，界面与接口只回显 `••••••`），支持 Bearer 与 query 两种鉴权 |
 | `nickname_sync_mode` | `profile` | `profile` / `group_card` / `hybrid` |
 | `max_avatar_mb` | `5` | 头像大小上限（MB） |
+
+> WebUI 人格抽屉会显示「上次推送到 QQ」「最近核对 QQ 资料」时间，并提供「立即同步到 QQ」按钮；插件**不会从 QQ 反向拉取**昵称或头像，QQ 侧被改动后可用 `/persona check` 查看差异、`/persona sync` 强制修复。
 
 ### 记忆
 

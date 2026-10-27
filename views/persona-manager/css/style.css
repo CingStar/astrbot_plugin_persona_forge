@@ -1775,13 +1775,16 @@ img {
 
 .drawer-tabs {
   display: flex;
+  align-items: center;
   gap: 2px;
   margin: 10px 14px 0;
   padding: 4px;
+  min-height: 46px;
   border: 1px solid var(--line);
   border-radius: 14px;
   background: var(--panel-soft);
   overflow-x: auto;
+  overflow-y: hidden;
   scrollbar-width: none;
 }
 
@@ -1790,15 +1793,18 @@ img {
 }
 
 .drawer-tab {
-  flex: 1 1 auto;
-  min-width: 0;
-  padding: 8px 12px;
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 36px;
+  padding: 0 12px;
   border: 1px solid transparent;
   border-radius: 10px;
   color: var(--muted);
-  font-size: 12.5px;
+  font-size: 13px;
   font-weight: 600;
-  line-height: 1.2;
+  line-height: 1;
   text-align: center;
   white-space: nowrap;
   transition:
@@ -1815,7 +1821,7 @@ img {
 
 .drawer-tab:focus-visible {
   outline: 2px solid var(--accent);
-  outline-offset: 1px;
+  outline-offset: -2px;
 }
 
 .drawer-tab[aria-selected="true"] {

@@ -391,6 +391,7 @@ export const endpoints = {
   uploadAvatar: (pid, file) => upload(`persona/avatar/upload/${encodeURIComponent(pid)}`, file),
   avatarFromUrl: (payload) => apiPost("persona/avatar/url", payload),
   removeAvatar: (pid) => apiPost("persona/avatar/remove", { pid }),
+  syncQQ: (pid) => apiPost("persona/sync", { pid }),
   switchPersona: (pid) => apiPost("persona/switch", { pid }),
   iterate: (pid, mode) => apiPost("persona/iterate", { pid, mode }),
 
@@ -406,6 +407,7 @@ export const endpoints = {
 
   memory: (pid) => apiGet("memory", { pid }),
   memoryAction: (payload) => apiPost("memory", payload),
+  captureMemory: (pid) => apiPost("memory/capture", { pid }),
 
   reviews: (status) => apiGet("reviews", { status }),
   review: (pid) => apiGet("review", { pid }),

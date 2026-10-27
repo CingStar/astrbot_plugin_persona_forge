@@ -70,6 +70,7 @@ class ApiMixin:
             (f"{prefix}/persona/avatar/upload/<pid>", self.api_avatar_upload, ["POST"], "Upload avatar"),
             (f"{prefix}/persona/avatar/url", self.api_avatar_url, ["POST"], "Avatar from URL"),
             (f"{prefix}/persona/avatar/remove", self.api_avatar_remove, ["POST"], "Remove avatar"),
+            (f"{prefix}/persona/sync", self.api_persona_sync, ["POST"], "Push profile to QQ"),
             (f"{prefix}/persona/switch", self.api_switch, ["POST"], "Switch persona"),
             (f"{prefix}/persona/versions", self.api_versions, ["GET"], "Persona versions"),
             (f"{prefix}/persona/version", self.api_persona_version, ["GET"], "Persona version detail"),
@@ -80,6 +81,7 @@ class ApiMixin:
             (f"{prefix}/persona/dev/compact", self.api_dev_compact, ["POST"], "Compact dev notes"),
             (f"{prefix}/persona/dev/clear", self.api_dev_clear, ["POST"], "Clear dev notes"),
             (f"{prefix}/memory", self.api_memory, ["GET", "POST"], "Persona memory"),
+            (f"{prefix}/memory/capture", self.api_memory_capture, ["POST"], "Capture conversation into memory"),
             (f"{prefix}/reviews", self.api_reviews, ["GET"], "Reviews"),
             (f"{prefix}/review", self.api_review_detail, ["GET"], "Review detail"),
             (f"{prefix}/reviews/action", self.api_review_action, ["POST"], "Approve/reject review"),
@@ -155,6 +157,17 @@ class ApiMixin:
             "backup_dir": str(self.backup_dir),
             "request_dir": str(self.request_dir),
             "result_dir": str(self.result_dir),
+        }
+
+    def _qq_payload(self, pid: str) -> dict:
+        prof = self.profiles.get(pid) or {}
+        return {
+            "configured": bool(self.snowluma_http),
+            "mode": self.nickname_sync_mode,
+            "synced_at": int(prof.get("qq_synced_at") or 0),
+            "checked_at": int(prof.get("qq_checked_at") or 0),
+            "avatar_saved_at": int(prof.get("avatar_saved_at") or 0),
+            "remote_nickname": str(prof.get("qq_remote_nickname") or ""),
         }
 
     def _status_counts(self) -> dict:
@@ -244,6 +257,7 @@ class ApiMixin:
             "begin_dialogs": (getattr(native, "begin_dialogs", None) or []) if native else [],
             "memory_count": len(self._load_memory(pid)),
             "version_count": len(self._list_versions(pid)),
+            "qq": self._qq_payload(pid),
             "dev": {
                 "active": dev_pid == pid,
                 "persona_id": dev_pid,
@@ -353,6 +367,22 @@ class ApiMixin:
         prof["updated_at"] = int(time.time())
         self._save_profiles()
         return json_response({"message": "已移除头像"})
+
+    async def api_persona_sync(self):
+        """Push the current persona's nickname/avatar to QQ via SnowLuma."""
+        payload = await request.json(default={})
+        pid = str(payload.get("pid") or "").strip()
+        if not pid:
+            return error_response("缺少人格 id", 400)
+        if not self.snowluma_http:
+            return error_response("未配置 SnowLuma，无法同步到 QQ", 400)
+        if pid != self._active_persona():
+            return error_response("只能把当前人格同步到 QQ，请先切换人格", 400)
+        try:
+            await self._apply_profile(pid, str(payload.get("group_id") or ""))
+        except Exception as e:
+            return error_response(str(e), 400)
+        return json_response({"message": "已同步到 QQ", "qq": self._qq_payload(pid)})
 
     async def api_switch(self):
         payload = await request.json(default={})
@@ -522,6 +552,20 @@ class ApiMixin:
         except Exception as e:
             return error_response(str(e), 400)
         return json_response({"message": msg})
+
+    async def api_memory_capture(self):
+        """Capture the latest conversation into persona memory on demand."""
+        payload = await request.json(default={})
+        pid = str(payload.get("pid") or self._active_persona()).strip()
+        umo = str(payload.get("umo") or "").strip() or None
+        try:
+            result = await self._capture_conversation(pid, umo=umo, limit=int(payload.get("limit") or 20))
+        except Exception as e:
+            return error_response(str(e), 400)
+        return json_response({
+            "message": f"已抓取最近会话 {result['messages']} 条消息到人格 {pid} 的记忆",
+            "capture": result,
+        })
 
     async def api_reviews(self):
         status = request.query.get("status", "pending")
