@@ -16,7 +16,12 @@ jobs:
       - name: Build plugin zip
         run: |
           zip -r astrbot_plugin_persona_forge.zip \
-            main.py metadata.yaml _conf_schema.json README.md LICENSE CHANGELOG.md views
+            main.py metadata.yaml _conf_schema.json README.md LICENSE CHANGELOG.md views persona_forge
+      - name: Verify zip contents
+        run: |
+          unzip -l astrbot_plugin_persona_forge.zip | grep -q " main.py$"
+          unzip -l astrbot_plugin_persona_forge.zip | grep -q " persona_forge/api.py$"
+          unzip -l astrbot_plugin_persona_forge.zip | grep -q " views/persona-manager/index.html$"
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
         with:
