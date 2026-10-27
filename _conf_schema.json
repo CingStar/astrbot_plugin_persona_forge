@@ -1,0 +1,112 @@
+{
+  "profile_dir": {
+    "description": "人格资料目录（头像/昵称 JSON）",
+    "type": "string",
+    "default": "/AstrBot/data/persona_profiles"
+  },
+  "memory_dir": {
+    "description": "人格记忆目录（按人格 JSON）",
+    "type": "string",
+    "default": "/AstrBot/data/persona_memory"
+  },
+  "wiki_file": {
+    "description": "共享知识库/Wiki JSON（所有人格共用）",
+    "type": "string",
+    "default": "/AstrBot/data/shared_wiki.json"
+  },
+  "astrbot_kb_name": {
+    "description": "可选：同时检索 AstrBot 知识库名称，作为共享 wiki",
+    "type": "string",
+    "default": ""
+  },
+  "snowluma_http": {
+    "description": "SnowLuma OneBot HTTP 地址，例如 http://snowluma:3000",
+    "type": "string",
+    "default": ""
+  },
+  "snowluma_token": {
+    "description": "SnowLuma OneBot access token",
+    "type": "string",
+    "default": ""
+  },
+  "auto_llm_rewrite": {
+    "description": "切换人格时用聊天模型重写提示词（默认关闭，开启会消耗模型额度）",
+    "type": "bool",
+    "default": false
+  },
+  "max_avatar_mb": {
+    "description": "头像大小上限（MB）",
+    "type": "int",
+    "default": 5
+  },
+  "image_search_enabled": {
+    "description": "允许在创建人格时用自然语言联网找头像",
+    "type": "bool",
+    "default": true
+  },
+  "image_search_engine": {
+    "description": "图片搜索源：baidu 或 bing",
+    "type": "string",
+    "default": "baidu"
+  },
+  "image_search_count": {
+    "description": "每次返回候选图片数量",
+    "type": "int",
+    "default": 5
+  },
+  "backup_dir": {
+    "description": "数字生命卡备份目录（容器内路径）",
+    "type": "string",
+    "default": "/AstrBot/data/life_card/backups"
+  },
+  "request_dir": {
+    "description": "宿主 CLI 请求目录",
+    "type": "string",
+    "default": "/AstrBot/data/life_card/requests"
+  },
+  "result_dir": {
+    "description": "宿主 CLI 结果目录",
+    "type": "string",
+    "default": "/AstrBot/data/life_card/results"
+  },
+  "allow_restore": {
+    "description": "允许 owner 从 QQ 发起恢复请求",
+    "type": "bool",
+    "default": false
+  },
+  "version_retention": {
+    "description": "每个人格保留的提示词版本数",
+    "type": "int",
+    "default": 20
+  },
+  "group_mode": {
+    "description": "群聊模式：off/chat/admin",
+    "type": "string",
+    "default": "off"
+  },
+  "group_whitelist": {
+    "description": "允许的群号列表；空表示不限制",
+    "type": "list",
+    "default": []
+  },
+  "require_at": {
+    "description": "群聊是否必须 @ 才响应",
+    "type": "bool",
+    "default": true
+  },
+  "guest_wiki": {
+    "description": "群友可读共享 wiki：read/off",
+    "type": "string",
+    "default": "read"
+  },
+  "guest_rate_limit_per_minute": {
+    "description": "群友每分钟最多响应次数",
+    "type": "int",
+    "default": 5
+  },
+  "nickname_sync_mode": {
+    "description": "QQ 资料同步：profile/group_card/hybrid",
+    "type": "string",
+    "default": "profile"
+  }
+}

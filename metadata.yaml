@@ -1,0 +1,8 @@
+name: astrbot_plugin_assistant
+display_name: 人格助手
+desc: 合并人格管理、人格记忆、自然语言创建/切换、数字生命卡。
+short_desc: 人格 + 记忆 + 生命卡
+version: 0.3.0
+author: DSH
+repo: https://example.invalid/astrbot_plugin_assistant
+astrbot_version: ">=4.0,<6"

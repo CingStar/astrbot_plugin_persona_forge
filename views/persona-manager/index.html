@@ -1,0 +1,61 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>人格助手</title>
+  <link rel="stylesheet" href="./style.css" />
+</head>
+<body>
+  <header>
+    <h1>人格助手</h1>
+    <nav>
+      <button class="tab active" data-tab="personas">人格</button>
+      <button class="tab" data-tab="reviews">审查</button>
+      <button class="tab" data-tab="group">群聊</button>
+    </nav>
+  </header>
+
+  <main>
+    <section id="tab-personas" class="tab-pane active">
+      <div class="toolbar">
+        <button id="refresh">刷新</button>
+        <span id="status"></span>
+      </div>
+      <div id="persona-list" class="grid"></div>
+    </section>
+
+    <section id="tab-reviews" class="tab-pane">
+      <div class="toolbar"><button id="refresh-reviews">刷新</button></div>
+      <div id="review-list"></div>
+      <pre id="review-diff"></pre>
+    </section>
+
+    <section id="tab-group" class="tab-pane">
+      <form id="group-form">
+        <label>群聊模式
+          <select name="group_mode">
+            <option value="off">off</option>
+            <option value="chat">chat</option>
+            <option value="admin">admin</option>
+          </select>
+        </label>
+        <label>群白名单（逗号分隔）
+          <input name="group_whitelist" placeholder="123456,789012" />
+        </label>
+        <label class="row"><input type="checkbox" name="require_at" /> 必须 @ 才响应</label>
+        <label>群友 Wiki
+          <select name="guest_wiki"><option value="read">read</option><option value="off">off</option></select>
+        </label>
+        <label>群友限速（次/分钟）
+          <input type="number" name="guest_rate_limit_per_minute" min="1" max="100" />
+        </label>
+        <button type="submit">保存</button>
+        <span id="group-status"></span>
+      </form>
+    </section>
+  </main>
+
+  <script type="module" src="./app.js"></script>
+</body>
+</html>

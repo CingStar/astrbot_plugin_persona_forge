@@ -1,0 +1,30 @@
+name: CI
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+
+jobs:
+  syntax:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install check deps
+        run: pip install pyyaml
+      - name: Compile Python
+        run: python -m compileall -q main.py
+      - name: Validate JSON
+        run: python -c "import json; json.load(open('_conf_schema.json', encoding='utf-8'))"
+      - name: Check plugin metadata
+        run: |
+          python - <<'PY'
+          import yaml
+          meta = yaml.safe_load(open('metadata.yaml', encoding='utf-8'))
+          for key in ('name', 'display_name', 'version'):
+              assert meta.get(key), key
+          print('metadata OK:', meta['name'], meta['version'])
+          PY

@@ -1,0 +1,26 @@
+__pycache__/
+*.py[cod]
+*.pyd
+.venv/
+venv/
+.env
+.env.*
+dist/
+build/
+*.zip
+*.pialife
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.DS_Store
+Thumbs.db
+
+# runtime data / secrets (never commit)
+data/
+persona_profiles/
+persona_memory/
+shared_wiki.json
+runtime_state.json
+life_card/
+*.log
+config.local.json
