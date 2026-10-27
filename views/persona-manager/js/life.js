@@ -156,7 +156,7 @@ export function mount(app, root) {
         el(
           "span",
           { class: "chip" },
-          icon("shield", { size: 14 }),
+          icon("database", { size: 14 }),
           el("span", null, `宿主卡 ${hostCards.length}`)
         )
       )
@@ -257,10 +257,10 @@ export function mount(app, root) {
       content.appendChild(
         buildGroup({
           title: "宿主卡",
-          subtitle: "由 life-card 宿主生成，恢复请在宿主侧进行",
-          iconName: "shield",
+          subtitle: "由宿主 life-card-host 生成的全量卡（含 AstrBot 配置/数据库），插件只负责发起与查看，恢复需在宿主侧进行",
+          iconName: "database",
           cards: hostFiltered,
-          emptyHint: "宿主还没有生成卡片。",
+          emptyHint: "宿主还没有生成卡片。可在宿主运行 life-card-host 执行 all / agent / qq 备份。",
         })
       );
       renderedGroups += 1;

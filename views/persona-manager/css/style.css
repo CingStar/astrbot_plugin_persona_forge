@@ -1776,8 +1776,11 @@ img {
 .drawer-tabs {
   display: flex;
   gap: 2px;
-  padding: 8px 12px;
-  border-bottom: 1px solid var(--line);
+  margin: 10px 14px 0;
+  padding: 4px;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: var(--panel-soft);
   overflow-x: auto;
   scrollbar-width: none;
 }
@@ -1787,14 +1790,22 @@ img {
 }
 
 .drawer-tab {
-  flex: 0 0 auto;
-  padding: 7px 12px;
-  border-radius: var(--radius-pill);
+  flex: 1 1 auto;
+  min-width: 0;
+  padding: 8px 12px;
+  border: 1px solid transparent;
+  border-radius: 10px;
   color: var(--muted);
   font-size: 12.5px;
   font-weight: 600;
+  line-height: 1.2;
+  text-align: center;
   white-space: nowrap;
-  transition: background-color 0.16s var(--ease), color 0.16s var(--ease);
+  transition:
+    background-color 0.16s var(--ease),
+    border-color 0.16s var(--ease),
+    color 0.16s var(--ease),
+    box-shadow 0.16s var(--ease);
 }
 
 .drawer-tab:hover {
@@ -1802,10 +1813,23 @@ img {
   background: var(--accent-softer);
 }
 
+.drawer-tab:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}
+
 .drawer-tab[aria-selected="true"] {
-  color: #fff;
-  background: var(--accent-gradient);
-  box-shadow: 0 4px 12px rgba(59, 124, 255, 0.28);
+  color: var(--accent);
+  background: #fff;
+  border-color: rgba(59, 124, 255, 0.28);
+  box-shadow: 0 3px 10px rgba(45, 90, 160, 0.12);
+}
+
+[data-theme="dark"] .drawer-tab[aria-selected="true"] {
+  color: #d7e8ff;
+  background: rgba(91, 157, 255, 0.2);
+  border-color: rgba(91, 157, 255, 0.42);
+  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.28);
 }
 
 .drawer-body {
@@ -2434,9 +2458,28 @@ img {
   width: 38px;
   height: 38px;
   flex: 0 0 auto;
+  display: grid;
+  place-items: center;
   border-radius: 13px;
   overflow: hidden;
   background: var(--accent-soft);
+  color: var(--accent);
+}
+
+.life-group-avatar > svg {
+  display: block;
+  width: 19px;
+  height: 19px;
+}
+
+.life-group-avatar > * {
+  width: 100%;
+  height: 100%;
+}
+
+.life-group-avatar img {
+  display: block;
+  object-fit: cover;
 }
 
 .life-group-name {
