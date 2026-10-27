@@ -6,3 +6,5 @@ version: 0.3.0
 author: CingStars
 repo: https://github.com/CingStar/astrbot_plugin_persona_forge
 astrbot_version: ">=4.0,<6"
+support_platforms:
+  - aiocqhttp

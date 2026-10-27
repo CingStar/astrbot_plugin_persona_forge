@@ -8,7 +8,6 @@
 
 [![Version](https://img.shields.io/badge/version-0.3.0-6366F1?style=flat-square)](CHANGELOG.md)
 [![AstrBot](https://img.shields.io/badge/AstrBot-%3E%3D4.0%20%3C6-0EA5E9?style=flat-square)](https://github.com/AstrBotDevs/AstrBot)
-[![OneBot](https://img.shields.io/badge/platform-OneBot%20v11-2563EB?style=flat-square)](https://github.com/botuniverse/onebot)
 [![Command First](https://img.shields.io/badge/mode-command--first-8B5CF6?style=flat-square)](#commands)
 [![License](https://img.shields.io/badge/license-AGPL--3.0-22C55E?style=flat-square)](LICENSE)
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-EC4899?style=flat-square)](https://github.com/CingStar/astrbot_plugin_persona_forge/pulls)
@@ -42,7 +41,6 @@
 
 | 项目 | 要求 |
 | --- | --- |
-| 支持平台 | **OneBot v11（QQ）**，如 SnowLuma；其他 AstrBot 平台可用人格 / 记忆 / Wiki，但无法同步 QQ 昵称与头像 |
 | AstrBot | `>= 4.0, < 6` |
 | Python | 跟随 AstrBot 运行环境即可（CI 使用 3.12） |
 | 额外依赖 | 无；`Pillow` 可选（仅头像相似度核对） |
