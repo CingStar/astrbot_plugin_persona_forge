@@ -2,6 +2,8 @@
 
 AstrBot 人格管理、人格记忆、共享 Wiki、提示词版本与审查、数字生命卡。
 
+仓库：<https://github.com/CingStar/astrbot_plugin_assistant>
+
 **0.3.0 起改为指令优先，不再做自由文本意图识别。**
 
 ## 人格指令
