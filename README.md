@@ -6,7 +6,7 @@
 
 让角色不只活在提示词里，而是有资料、有记忆、有版本、可回滚。
 
-[![Version](https://img.shields.io/badge/version-0.4.0-6366F1?style=flat-square)](CHANGELOG.md)
+[![Version](https://img.shields.io/badge/version-0.3.0-6366F1?style=flat-square)](CHANGELOG.md)
 [![AstrBot](https://img.shields.io/badge/AstrBot-%3E%3D4.0%20%3C6-0EA5E9?style=flat-square)](https://github.com/AstrBotDevs/AstrBot)
 [![Command First](https://img.shields.io/badge/mode-command--first-8B5CF6?style=flat-square)](#commands)
 [![License](https://img.shields.io/badge/license-AGPL--3.0-22C55E?style=flat-square)](LICENSE)
@@ -23,7 +23,7 @@
 > 更新插件代码后需要**重载插件或重启 AstrBot**，插件不会热加载。人格、记忆、Wiki 等数据本身是实时读写，不受影响。
 
 > [!WARNING]
-> **0.4.0 起更名为「人格工坊」**：仓库与插件标识由 `astrbot_plugin_assistant` 改为 `astrbot_plugin_persona_forge`。升级时请把插件目录改成同名、重启 AstrBot，并在插件配置里重新确认路径——AstrBot 的插件配置按插件名保存，旧配置不会自动继承；数据目录默认值保持不变。
+> **项目更名为「人格工坊」**：仓库与插件标识由 `astrbot_plugin_assistant` 改为 `astrbot_plugin_persona_forge`。如从旧版升级，请把插件目录改成同名、重启 AstrBot，并在插件配置里重新确认路径——AstrBot 的插件配置按插件名保存，旧配置不会自动继承；数据目录默认值保持不变。
 
 ---
 
