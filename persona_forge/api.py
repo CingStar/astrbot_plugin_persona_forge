@@ -702,12 +702,25 @@ class ApiMixin:
 
     async def api_status(self):
         dev_pid = self._dev_active_pid()
+        handlers = 0
+        try:
+            from astrbot.core.star.star_handler import star_handlers_registry
+
+            owner = self.__class__.__module__
+            handlers = sum(
+                1
+                for handler in star_handlers_registry
+                if getattr(handler, "handler_module_path", "") == owner
+            )
+        except Exception:
+            handlers = 0
         return json_response({
             "version": PLUGIN_VERSION,
             "active": self._active_persona(),
             "paths": self._paths_payload(),
             "counts": self._status_counts(),
             "migrated": list(self.state.get("migrated_paths", []) or []),
+            "handlers": handlers,
             "dev": {
                 "active_pid": dev_pid,
                 "expires_at": int(self._dev_state().get("expires_at") or 0),

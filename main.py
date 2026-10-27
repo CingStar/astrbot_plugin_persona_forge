@@ -6,6 +6,9 @@
 
 from __future__ import annotations
 
+from pathlib import Path
+
+from astrbot.api import logger
 from astrbot.api.star import Star
 
 try:  # AstrBot loads main.py as data.plugins.<dir>.main (package import).
@@ -48,15 +51,32 @@ class PersonaForgePlugin(
 
 
 def _adopt_handlers() -> None:
-    """Keep AstrBot handler ownership on this entry module after the split."""
-    if not __package__:
-        return
+    """Keep AstrBot handler ownership on this entry module after the split.
+
+    Works both for package imports (``data.plugins.<dir>.main``) and for
+    loaders that import main.py as a top-level module: in the latter case the
+    entry path AstrBot puts in ``star_map`` is reconstructed from the plugin
+    directory name.
+    """
+    dir_name = Path(__file__).resolve().parent.name
+    owner = __name__.rsplit(".", 1)[0] if "." in __name__ else ""
+    if owner.startswith("data.plugins.") or owner.startswith("astrbot.builtin_stars."):
+        package = owner
+    else:
+        package = f"data.plugins.{dir_name}"
+    entry = f"{package}.main"
     try:
         from astrbot.core.star.star_handler import star_handlers_registry
 
-        adopt_mixin_handlers(star_handlers_registry, __name__, __package__)
-    except Exception:  # pragma: no cover - only for unusual AstrBot builds
-        pass
+        count = adopt_mixin_handlers(star_handlers_registry, entry, package)
+        logger.info("[persona_forge] adopted %d handlers under %s", count, entry)
+        if count == 0:
+            logger.warning(
+                "[persona_forge] no handlers adopted; commands may not respond. "
+                "Check the plugin load log / AstrBot version."
+            )
+    except Exception as e:  # pragma: no cover - only for unusual AstrBot builds
+        logger.warning("[persona_forge] handler adoption failed: %s", e)
 
 
 _adopt_handlers()

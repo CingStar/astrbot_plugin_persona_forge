@@ -23,15 +23,17 @@ def adopt_mixin_handlers(registry, entry_name: str, package_prefix: str) -> int:
     Returns:
         Number of handlers rewritten.
     """
-    if not entry_name or not package_prefix or registry is None:
+    if not entry_name or registry is None:
         return 0
-    module_prefix = f"{package_prefix}.persona_forge"
+    prefixes = ["persona_forge"]
+    if package_prefix:
+        prefixes.insert(0, f"{package_prefix}.persona_forge")
     handlers_map = getattr(registry, "star_handlers_map", None)
     changed = 0
     for handler in list(registry):
         function = getattr(handler, "handler", None)
         module = str(getattr(function, "__module__", "") or "")
-        if not module.startswith(module_prefix):
+        if not any(module == prefix or module.startswith(prefix + ".") for prefix in prefixes):
             continue
         old_name = getattr(handler, "handler_full_name", "")
         handler.handler_module_path = entry_name

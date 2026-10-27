@@ -3,7 +3,7 @@
 ## 0.3.1
 
 - **后端拆包**：`main.py` 只保留入口与 mixin 组合，业务逻辑拆到 `persona_forge/` 包（`config` / `paths` / `memory_scope` / `cards` / `dev` / `text` / `handlers` / `core` / `persona_commands` / `memory_cmds` / `knowledge` / `dev_mode` / `life_cards` / `legacy_natural` / `events` / `api`）；纯函数模块不依赖 AstrBot。
-- **Handler 归属修正**：拆包后 AstrBot 按 `handler_module_path` 会找不到 Handler 所属插件（路径变成 `...persona_forge.api` 等子模块），新增 `persona_forge/handlers.py`，在 `main.py` 导入完成时把这些 Handler 的 `handler_module_path` / `handler_full_name` / `star_handlers_map` 键改回入口模块，避免指令失效。
+- **Handler 归属修正**：拆包后 AstrBot 按 `handler_module_path` 会找不到 Handler 所属插件（路径变成 `...persona_forge.api` 等子模块），新增 `persona_forge/handlers.py`，在 `main.py` 导入完成时把这些 Handler 的 `handler_module_path` / `handler_full_name` / `star_handlers_map` 键改回入口模块，避免指令失效；同时兼容「顶层模块导入」的加载方式，并在启动日志输出 `adopted N handlers`、`/status` 返回 `handlers` 计数，便于排查指令不响应。
 - **会话记忆抓取**：新增 `/memory snapshot` 与 WebUI 记忆页「抓取最近会话」，按需把当前会话最近 20 条消息写入当前人格（`session` / `scope=chat`，重复抓取更新同一条快照）；明确人格记忆不会实时同步 QQ 聊天记录。
 - **QQ 资料同步可视化**：人格抽屉显示「上次推送到 QQ」「最近核对 QQ 资料」时间，新增「立即同步到 QQ」（`POST persona/sync`）；插件不会从 QQ 反向拉取昵称/头像。
 - **数据目录合规整改**：所有数据统一收敛到 `data/plugin_data/astrbot_plugin_persona_forge/**`（资料 / 记忆 / Wiki / 生命卡），不再写 `AstrBot/data/` 根目录；相对路径基于 AstrBot 根目录解析，绝对路径原样保留。
