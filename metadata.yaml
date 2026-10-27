@@ -3,6 +3,6 @@ display_name: 人格工坊
 desc: 人格创建与迭代、分层记忆、共享 Wiki、提示词版本与审查、数字生命卡。
 short_desc: 人格工坊 · 记忆 · 生命卡
 version: 0.3.0
-author: DSH
+author: CingStars
 repo: https://github.com/CingStar/astrbot_plugin_persona_forge
 astrbot_version: ">=4.0,<6"

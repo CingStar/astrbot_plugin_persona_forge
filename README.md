@@ -387,7 +387,7 @@ AstrBot/data/
 
 ## 📄 License
 
-[AGPL-3.0](LICENSE) © DSH
+[AGPL-3.0](LICENSE) © CingStars
 
 本项目以 AGPL-3.0 授权：修改后再分发（包括作为网络服务提供）需要开放对应源码。
 
