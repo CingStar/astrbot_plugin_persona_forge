@@ -10,9 +10,9 @@
 [![AstrBot](https://img.shields.io/badge/AstrBot-%3E%3D4.0%20%3C6-0EA5E9?style=flat-square)](https://github.com/AstrBotDevs/AstrBot)
 [![Command First](https://img.shields.io/badge/mode-command--first-8B5CF6?style=flat-square)](#commands)
 [![License](https://img.shields.io/badge/license-AGPL--3.0-22C55E?style=flat-square)](LICENSE)
-[![PRs Welcome](https://img.shields.io/badge/PRs-welcome-EC4899?style=flat-square)](#dev)
+[![PRs Welcome](https://img.shields.io/badge/PRs-welcome-EC4899?style=flat-square)](https://github.com/CingStar/astrbot_plugin_persona_forge/pulls)
 
-[快速开始](#quickstart) · [能力一览](#features) · [指令](#commands) · [配置](#config) · [常见问题](#faq) · [更新日志](CHANGELOG.md)
+[快速开始](#quickstart) · [能力一览](#features) · [指令](#commands) · [配置](#config) · [更新日志](CHANGELOG.md)
 
 </div>
 
@@ -38,28 +38,6 @@
 | 🧾 版本与审查 | 💳 数字生命卡 | 💻 WebUI 控制台 |
 | :---: | :---: | :---: |
 | 修改前自动快照，压缩草稿<br/>diff 审批，一键回滚 / 导出 | 冷 / 热备份与恢复任务<br/>交给宿主 `life-card-host` 执行 | 人格列表、版本、待审 diff<br/>群聊门禁可视化配置 |
-
-## 🧭 工作原理
-
-插件挂在 AstrBot 的事件链路与 LLM 请求链路上：指令走指令处理器，普通对话则在请求前注入「当前人格 + 私有记忆 + 共享知识」。
-
-```mermaid
-flowchart LR
-    QQ(["QQ 私聊 / 群聊"]) --> ROUTE{"指令优先路由"}
-    ROUTE -->|"/persona · /memory · /wiki · /life"| CMD["指令处理器"]
-    ROUTE -->|"普通对话"| GATE["群聊门禁<br/>白名单 · @ · 限速"]
-    CMD --> STORE[("本地数据<br/>人格资料 · 版本 · 记忆 · Wiki")]
-    GATE --> INJECT["注入上下文<br/>人格提示词 + 私有记忆 + 共享 Wiki"]
-    STORE -.-> INJECT
-    INJECT --> LLM["AstrBot LLM"]
-    LLM --> REPLY["按当前人格口吻回复"]
-    REPLY --> QQ
-```
-
-- **指令优先**：命中指令就直接执行并拦截本轮 LLM，不会被模型「自由发挥」；
-- **人格即资产**：提示词、字段、资料、头像都有版本，随时回滚；
-- **记忆分层**：经历 / 知识 / 会话快照彼此独立，私有记忆不会流到群友侧；
-- **零额外依赖**：只依赖 AstrBot 自带运行环境，可选 Pillow 用于头像相似度核对。
 
 <a name="quickstart"></a>
 
@@ -267,16 +245,6 @@ git clone https://github.com/CingStar/astrbot_plugin_persona_forge.git
 
 修改提示词 / 字段 / 头像前，插件会自动生成版本快照，默认每人格保留 20 版（`version_retention`）。
 
-```mermaid
-flowchart LR
-    A["提示词 / 字段 / 头像变更"] --> B["自动快照 v0001…"]
-    C["compress / rewrite"] --> D["草稿 + unified diff"]
-    D -->|approve| E["应用并再次快照"]
-    D -->|reject| F["丢弃草稿"]
-    B -.-> G["/persona rollback 回滚"]
-    E -.-> G
-```
-
 - **版本内容**：系统提示词、开场对话、工具、Skills、错误文案、人格资料、头像副本；
 - **导出**：`/persona export <id>` 生成 `.md` 到 `exports/`，可直接发到聊天里；
 - **迭代**：`/persona iterate <id>` 把该人格的 `knowledge` 记忆追加成「人格专属知识」段落；
@@ -422,119 +390,6 @@ AstrBot/data/
 ```
 
 > 迁移时复制 `profile_dir`、`memory_dir`、`wiki_file` 三处即可；原生 Persona 保存在 AstrBot 自己的数据库里，整机迁移建议直接备份 AstrBot 的 data 目录。
-
-<a name="faq"></a>
-
-## 💬 常见问题
-
-<details>
-<summary><b>发送 /persona 没有反应？</b></summary>
-
-1. 确认发送者是 AstrBot 管理员（所有管理指令都要求管理员权限）；
-2. 确认插件已加载，可在 AstrBot 日志里搜索 `[persona_forge]`；
-3. 群聊里需要 @ 机器人，且当前群在白名单内；
-4. 检查 AstrBot 的指令前缀是否不是 `/`。
-
-</details>
-
-<details>
-<summary><b>切换人格报「资料不完整」？</b></summary>
-
-目标人格必须同时有昵称和头像；`default` 人格也必须完整，否则退出时无法恢复。先执行：
-
-```text
-/persona create default|昵称|提示词
-/persona avatar default
-```
-
-</details>
-
-<details>
-<summary><b>切换后 QQ 昵称 / 头像没变？</b></summary>
-
-需要在配置中填写 `snowluma_http`（以及可选的 `snowluma_token`），并且 OneBot 实现支持 `set_qq_profile` / `set_qq_avatar`。群名片模式还需要支持 `set_group_card`。
-
-</details>
-
-<details>
-<summary><b>群友能看到我的记忆吗？</b></summary>
-
-不能。私有记忆只注入给管理员；群友侧只有共享 Wiki 与 AstrBot 知识库，且是否注入由 `guest_wiki` 决定。
-
-</details>
-
-<details>
-<summary><b>WebUI 里看不到「人格工坊」视图？</b></summary>
-
-需要 AstrBot 版本支持插件 `views/` 目录。不支持时所有功能仍可通过指令完成。
-
-</details>
-
-<details>
-<summary><b>更新插件后需要重启吗？</b></summary>
-
-需要。`main.py` 不会被热加载，重载插件或重启 AstrBot 后生效；人格与记忆数据是实时读写的，不受影响。
-
-</details>
-
-<details>
-<summary><b>版本快照会不会占满磁盘？</b></summary>
-
-默认每人格保留 20 版，可在配置里调小 `version_retention`，或手动删除 `persona_profiles/versions/<id>/` 下的旧版本。
-
-</details>
-
-<details>
-<summary><b>备份 / 恢复一直没动静？</b></summary>
-
-插件只负责写请求文件，需要宿主机上的 `life-card-host` 消费 `requests/` 并回写 `results/`。恢复还需要 `allow_restore: true`。
-
-</details>
-
-<details>
-<summary><b>头像为什么保存失败？</b></summary>
-
-确认格式是 PNG / JPEG / WebP，且大小不超过 `max_avatar_mb`；URL 需要能直接访问到图片，不要给网页地址。
-
-</details>
-
-<details>
-<summary><b>为什么 0.3.0 不再支持自然语言创建人格？</b></summary>
-
-自由文本意图识别容易误触发、难以预期。0.3.0 起统一走指令，交互式创建通过「下一条消息」完成，既保留便利性又完全可控。
-
-</details>
-
-<a name="dev"></a>
-
-<details>
-<summary><b>为什么改名为「人格工坊」？</b></summary>
-
-旧名「人格助手」容易和通用 AI 助手混淆，而这个插件真正做的是创建、迭代、版本化和备份人格。0.4.0 起更名为「人格工坊」，插件标识同步改为 `astrbot_plugin_persona_forge`；`/persona`、`/memory`、`/wiki`、`/life` 指令与数据目录保持不变。
-
-</details>
-
-## 🧪 开发与发布
-
-| 文件 | 作用 |
-| --- | --- |
-| `main.py` | 插件主逻辑：指令、记忆注入、版本、审查、WebUI API |
-| `_conf_schema.json` | 插件配置项定义 |
-| `metadata.yaml` | 插件元数据（名称、版本、兼容范围） |
-| `views/persona-manager/` | WebUI 视图（HTML / CSS / JS） |
-| `.github/workflows/ci.yml` | 语法编译、JSON 校验、元数据校验 |
-| `.github/workflows/release.yml` | 打 tag 后自动打包并创建 Release |
-
-本地校验：
-
-```bash
-python -m compileall -q main.py
-python -c "import json; json.load(open('_conf_schema.json', encoding='utf-8'))"
-```
-
-发布：`git tag v0.4.0 && git push --tags`，Release 工作流会打包 `main.py`、`metadata.yaml`、`_conf_schema.json`、`README.md`、`LICENSE`、`CHANGELOG.md` 与 `views/`。
-
-欢迎 PR：保持「指令优先」的交互约定，新增指令请同步更新本 README 的指令表与 `CHANGELOG.md`。
 
 ## 📄 License
 
