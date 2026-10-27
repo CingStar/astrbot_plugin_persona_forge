@@ -15,10 +15,10 @@ jobs:
       - uses: actions/checkout@v4
       - name: Build plugin zip
         run: |
-          zip -r astrbot_plugin_assistant.zip \
+          zip -r astrbot_plugin_persona_forge.zip \
             main.py metadata.yaml _conf_schema.json README.md LICENSE CHANGELOG.md views
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
         with:
-          files: astrbot_plugin_assistant.zip
+          files: astrbot_plugin_persona_forge.zip
           generate_release_notes: true

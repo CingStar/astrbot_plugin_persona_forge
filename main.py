@@ -30,7 +30,7 @@ PERSONA_ID_RE = re.compile(r"^[A-Za-z0-9_-]{1,40}$")
 ALLOWED_MIME = {"image/png", "image/jpeg", "image/webp"}
 
 
-class AssistantPlugin(Star):
+class PersonaForgePlugin(Star):
     def __init__(self, context: Context, config: AstrBotConfig | None = None):
         super().__init__(context)
         cfg = config or {}
@@ -87,11 +87,11 @@ class AssistantPlugin(Star):
         self.pending: dict[str, dict] = {}
         self.command_pending: dict[str, dict] = {}
         self._register_web_apis()
-        logger.info("[assistant] profile=%s memory=%s", self.profile_dir, self.memory_dir)
+        logger.info("[persona_forge] profile=%s memory=%s", self.profile_dir, self.memory_dir)
 
     # ---------- plugin view APIs ----------
     def _register_web_apis(self) -> None:
-        prefix = "/astrbot_plugin_assistant"
+        prefix = "/astrbot_plugin_persona_forge"
         routes = [
             (f"{prefix}/personas", self.api_personas, ["GET"], "List personas"),
             (f"{prefix}/versions", self.api_versions, ["GET"], "Persona versions"),
@@ -105,7 +105,7 @@ class AssistantPlugin(Star):
             try:
                 self.context.register_web_api(route, handler, methods, desc)
             except Exception as e:
-                logger.warning("[assistant] register_web_api %s failed: %s", route, e)
+                logger.warning("[persona_forge] register_web_api %s failed: %s", route, e)
 
     async def api_personas(self):
         active = self._active_persona()
@@ -186,7 +186,7 @@ class AssistantPlugin(Star):
             try:
                 return json.loads(path.read_text(encoding="utf-8"))
             except Exception as e:
-                logger.error("[assistant] invalid json %s: %s", path, e)
+                logger.error("[persona_forge] invalid json %s: %s", path, e)
         return default
 
     @staticmethod
@@ -452,7 +452,7 @@ class AssistantPlugin(Star):
             if hasattr(conf, "save_config"):
                 conf.save_config()
         except Exception as e:
-            logger.warning("[assistant] persist default persona failed: %s", e)
+            logger.warning("[persona_forge] persist default persona failed: %s", e)
         self.context.persona_manager.default_persona = persona_id
         await self.context.persona_manager.initialize()
 
@@ -493,7 +493,7 @@ class AssistantPlugin(Star):
             })
             self._save_memory(persona_id, items)
         except Exception as e:
-            logger.warning("[assistant] snapshot conversation failed: %s", e)
+            logger.warning("[persona_forge] snapshot conversation failed: %s", e)
 
     async def _switch_all_conversations(
         self, persona_id: str, current_umo: str | None = None, force_new: bool = False
@@ -516,7 +516,7 @@ class AssistantPlugin(Star):
                     if key not in tagged or seq > tagged[key][0]:
                         tagged[key] = (seq, c.conversation_id)
         except Exception as e:
-            logger.warning("[assistant] list conversations failed: %s", e)
+            logger.warning("[persona_forge] list conversations failed: %s", e)
         if current_umo:
             peers.setdefault(current_umo, current_umo.split(":")[0] if ":" in current_umo else "unknown")
         for umo, platform_id in peers.items():
@@ -530,7 +530,7 @@ class AssistantPlugin(Star):
                     title=f"persona:{persona_id}",
                 )
             except Exception as e:
-                logger.warning("[assistant] new conversation failed for %s: %s", umo, e)
+                logger.warning("[persona_forge] new conversation failed for %s: %s", umo, e)
 
     # ---------- SnowLuma profile ----------
     async def _snowluma_post(self, action: str, payload: dict) -> dict:
@@ -667,9 +667,9 @@ class AssistantPlugin(Star):
                 "last_reconcile_at": int(time.time()),
             })
             self._save_state()
-            logger.info("[assistant] plugin update reconcile: %s", report)
+            logger.info("[persona_forge] plugin update reconcile: %s", report)
         except Exception as e:
-            logger.warning("[assistant] plugin update reconcile failed: %s", e)
+            logger.warning("[persona_forge] plugin update reconcile failed: %s", e)
 
     def _default_profile_ready(self) -> bool:
         p = self._profile("default")
@@ -765,7 +765,7 @@ class AssistantPlugin(Star):
             self._save_profiles()
             return f"rewritten:{len(text)}"
         except Exception as e:
-            logger.warning("[assistant] LLM prompt rewrite failed: %s", e)
+            logger.warning("[persona_forge] LLM prompt rewrite failed: %s", e)
             return f"error:{e}"
 
     async def _use_persona(self, persona_id: str, umo: str | None = None, group_id: str = "") -> str:
@@ -921,7 +921,7 @@ class AssistantPlugin(Star):
             )
             return f"（已同步到 AstrBot 知识库 {self.astrbot_kb_name}）"
         except Exception as e:
-            logger.warning("[assistant] AstrBot KB add failed: %s", e)
+            logger.warning("[persona_forge] AstrBot KB add failed: %s", e)
             return f"（AstrBot 知识库同步失败：{e}）"
 
     def _wiki_list_text(self) -> str:
@@ -1019,7 +1019,7 @@ class AssistantPlugin(Star):
         try:
             result = await mgr.retrieve(query, [self.astrbot_kb_name], top_m_final=4)
         except Exception as e:
-            logger.warning("[assistant] AstrBot KB retrieve failed: %s", e)
+            logger.warning("[persona_forge] AstrBot KB retrieve failed: %s", e)
             return ""
         if not result:
             return ""
@@ -1962,7 +1962,7 @@ class AssistantPlugin(Star):
                     yield event.plain_result(f"创建失败：{e}")
                     return
                 self._halt(event)
-                logger.info("[assistant] one-shot persona create: %s", persona_id)
+                logger.info("[persona_forge] one-shot persona create: %s", persona_id)
                 if image_url:
                     yield event.plain_result(
                         f"已创建人格 {persona_id}（昵称={nickname}，提示词/人格卡已写入）。\n"
@@ -1976,7 +1976,7 @@ class AssistantPlugin(Star):
                 return
             self.pending[user] = {"stage": "id", "ts": time.time()}
             self._halt(event)
-            logger.info("[assistant] natural create intent from %s: %s", user, text[:80])
+            logger.info("[persona_forge] natural create intent from %s: %s", user, text[:80])
             yield event.plain_result(
                 "好，创建人格。先发一个英文 id（字母/数字/下划线/短横线），或发“取消”。\n"
                 "也可以一句话说全：创建人格，id=liv，昵称=丽芙，提示词=你是一只……"
@@ -2572,7 +2572,7 @@ class AssistantPlugin(Star):
                         if u:
                             urls.append(html.unescape(u))
         except Exception as e:
-            logger.warning("[assistant] image search failed: %s", e)
+            logger.warning("[persona_forge] image search failed: %s", e)
             return []
         out = []
         for u in urls:
@@ -2597,7 +2597,7 @@ class AssistantPlugin(Star):
         try:
             data, mime = await self._download_image(url)
         except Exception as e:
-            logger.warning("[assistant] candidate download failed: %s", e)
+            logger.warning("[persona_forge] candidate download failed: %s", e)
             return None, None
         if mime not in ALLOWED_MIME or len(data) > self.max_avatar_mb * 1024 * 1024:
             return None, None
@@ -3046,4 +3046,4 @@ class AssistantPlugin(Star):
         yield event.plain_result(f"已提交恢复请求 {rid[:8]}。机器人会离线，恢复后重启。")
 
     async def terminate(self):
-        logger.info("[assistant] terminated")
+        logger.info("[persona_forge] terminated")
